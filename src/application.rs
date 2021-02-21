@@ -1,7 +1,12 @@
 use minifb::{Key, Window};
+use specs::{Entity, World, WorldExt};
+use crate::{EntityTree, Node};
+
+type UiBuilder = dyn 'static + Fn(&mut World) -> Entity;
 
 pub struct Application {
     name: String,
+    ui: Option<Box<UiBuilder>>,
     window: Window,
 }
 
@@ -12,11 +17,20 @@ impl Application {
 
     pub fn run(&mut self) {
         let (width, height) = self.window.get_size();
-        let mut buffer: Vec<u32> = vec![0; width * height];
+        let buffer: Vec<u32> = vec![0; width * height];
+        let mut world = World::new();
+
+        if let Some(ui_builder) = &self.ui {
+            let root_widget = ui_builder(&mut world);
+            let root_node = Node::new(root_widget, None);
+            let _entity_tree = EntityTree::new(root_node);
+        }
+
         self.window
-            .limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+        .limit_update_rate(Some(std::time::Duration::from_micros(8300)));
 
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
+
             self.window
             .update_with_buffer(&buffer, 500, 500)
             .unwrap();
@@ -26,6 +40,7 @@ impl Application {
 
 pub struct ApplicationBuilder {
     name: String,
+    ui: Option<Box<UiBuilder>>,
     window: Option<Window>,
 }
 
@@ -33,6 +48,7 @@ impl ApplicationBuilder {
     pub fn new() -> ApplicationBuilder {
         ApplicationBuilder {
             name: String::new(),
+            ui: None,
             window: None,
         }
     }
@@ -42,14 +58,20 @@ impl ApplicationBuilder {
         self
     }
 
+    pub fn ui<F: 'static + Fn(&mut World) -> Entity>(mut self, ui_builder: F) -> Self {
+        self.ui = Some(Box::new(ui_builder));
+        self
+    }
+
     pub fn window(mut self, window: Window) -> Self {
         self.window = Some(window);
         self
     }
 
-    pub fn build(self) -> Application {        
+    pub fn build(self) -> Application {
         Application {
             name: self.name,
+            ui: self.ui,
             window: self.window.expect("You must define a Window on the Application."),
         }
     }
