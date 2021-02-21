@@ -1,6 +1,6 @@
 use minifb::{Key, Window};
-use specs::{Entity, World, WorldExt};
-use crate::{EntityTree, Node};
+use specs::{Entity, RunNow, World, WorldExt};
+use crate::{EntityTree, Node, TextRenderSystem};
 
 type UiBuilder = dyn 'static + Fn(&mut World) -> Entity;
 
@@ -26,10 +26,13 @@ impl Application {
             let _entity_tree = EntityTree::new(root_node);
         }
 
+        let mut text_system = TextRenderSystem{};
+
         self.window
         .limit_update_rate(Some(std::time::Duration::from_micros(8300)));
 
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
+            text_system.run_now(&mut world);
 
             self.window
             .update_with_buffer(&buffer, 500, 500)
