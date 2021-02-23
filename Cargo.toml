@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 specs = { version = "0.16.1", features = ["specs-derive"] }
 minifb = "0.19.2"
+tiny-skia = "0.4.2"
