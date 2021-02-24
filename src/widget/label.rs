@@ -1,8 +1,11 @@
 use specs::{Builder, Entity, World, WorldExt};
-use crate::{component::TextComponent};
+use crate::{PositionComponent, RenderComponent, Shape, SizeComponent, component::TextComponent};
 
 pub struct Label {
     entity: Entity,
+    position: PositionComponent,
+    render: RenderComponent,
+    size: SizeComponent,
     text: TextComponent,
 }
 
@@ -48,14 +51,37 @@ impl LabelBuilder {
     }
 
     pub fn build(self, world: &mut World) -> Label {
+        world.register::<PositionComponent>();
+        world.register::<RenderComponent>();
         world.register::<TextComponent>();
-        let text_component = TextComponent {
+        world.register::<SizeComponent>();
+
+        let position = PositionComponent {
+            x:5,
+            y:5
+        };
+        let shape = RenderComponent {
+            shape: Shape::Rectangle
+        };
+        let size = SizeComponent {
+            width: 100,
+            height: 55
+        };
+        let text = TextComponent {
             text: self.text
         };
-        let label = world.create_entity().with(text_component.clone()).build();
+        let label = world.create_entity()
+            .with(position.clone())
+            .with(shape.clone())
+            .with(text.clone())
+            .with(size.clone())
+            .build();
         Label {
             entity: label,
-            text: text_component
+            render: shape,
+            position,
+            size,
+            text
         }
     }
 }
