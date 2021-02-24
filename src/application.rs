@@ -1,6 +1,8 @@
+use std::{cell::RefCell, rc::Rc};
+
 use minifb::{Key, Window};
 use specs::{Entity, RunNow, World, WorldExt};
-use crate::{EntityTree, Node, TextRenderSystem};
+use crate::{EntityTree, Node, RenderingSystem, TextRenderSystem};
 
 type UiBuilder = dyn 'static + Fn(&mut World) -> Entity;
 
@@ -17,7 +19,7 @@ impl Application {
 
     pub fn run(&mut self) {
         let (width, height) = self.window.get_size();
-        let buffer: Vec<u32> = vec![0; width * height];
+        let buffer = Rc::new(RefCell::new(vec![0; width * height]));
         let mut world = World::new();
 
         if let Some(ui_builder) = &self.ui {
@@ -27,15 +29,17 @@ impl Application {
         }
 
         let mut text_system = TextRenderSystem{};
+        let mut render_system = RenderingSystem::new(&buffer);
 
         self.window
-        .limit_update_rate(Some(std::time::Duration::from_micros(8300)));
+            .limit_update_rate(Some(std::time::Duration::from_micros(8300)));
 
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
+            render_system.run_now(&mut world);
             text_system.run_now(&mut world);
 
             self.window
-            .update_with_buffer(&buffer, 500, 500)
+            .update_with_buffer(&buffer.borrow_mut(), 500, 500)
             .unwrap();
         }
     }
