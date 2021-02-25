@@ -1,12 +1,12 @@
 use specs::{Component, VecStorage};
 
-#[derive(Debug, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Shape {
     Circle(f64),
     Rectangle
 }
 
-#[derive(Debug, Clone)]
+#[derive(Copy,  Clone, Debug,)]
 pub struct RenderComponent {
     pub shape: Shape
 }

@@ -1,6 +1,6 @@
 use specs::{Component, VecStorage};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct PositionComponent {
     pub x: usize,
     pub y: usize
