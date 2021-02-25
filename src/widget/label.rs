@@ -1,6 +1,9 @@
 use specs::{Builder, Entity, World, WorldExt};
 use crate::{PositionComponent, RenderComponent, Shape, SizeComponent, component::TextComponent};
 
+const LABEL_DEFAULT_WIDTH: usize = 150;
+const LABEL_DEFAULT_HEIGHT: usize = 55;
+
 pub struct Label {
     entity: Entity,
     position: PositionComponent,
@@ -19,6 +22,14 @@ impl Label {
         self.entity
     }
 
+    pub fn position(&self) -> PositionComponent {
+        self.position
+    }
+
+    pub fn size(&self) -> SizeComponent {
+        self.size
+    }
+
     pub fn text(&self) -> &TextComponent {
         &self.text
     }
@@ -35,18 +46,47 @@ impl Label {
 }
 
 pub struct LabelBuilder {
-    text: String,
+    position: PositionComponent,
+    render: RenderComponent,
+    size: SizeComponent,
+    text: TextComponent,
 }
 
 impl LabelBuilder {
     pub fn new() -> LabelBuilder {
         LabelBuilder {
-            text: String::default()
+            position: PositionComponent::default(),
+            render: RenderComponent {
+                shape: Shape::Rectangle
+            },
+            size: SizeComponent {
+                width: LABEL_DEFAULT_WIDTH,
+                height: LABEL_DEFAULT_HEIGHT
+            },
+            text: TextComponent::default(),
         }
     }
 
+    pub fn position(mut self, x: usize, y: usize) -> LabelBuilder {
+        self.position = PositionComponent {
+            x,
+            y
+        };
+        self
+    }
+
+    pub fn size(mut self, width: usize, height: usize) -> LabelBuilder {
+        self.size = SizeComponent {
+            width,
+            height
+        };
+        self
+    }
+
     pub fn text(mut self, text: String) -> Self {
-        self.text = text;
+        self.text = TextComponent {
+            text
+        };
         self
     }
 
@@ -56,32 +96,19 @@ impl LabelBuilder {
         world.register::<TextComponent>();
         world.register::<SizeComponent>();
 
-        let position = PositionComponent {
-            x:5,
-            y:5
-        };
-        let shape = RenderComponent {
-            shape: Shape::Rectangle
-        };
-        let size = SizeComponent {
-            width: 100,
-            height: 55
-        };
-        let text = TextComponent {
-            text: self.text
-        };
         let label = world.create_entity()
-            .with(position.clone())
-            .with(shape.clone())
-            .with(text.clone())
-            .with(size.clone())
+            .with(self.position)
+            .with(self.render)
+            .with(self.size)
+            .with(self.text.clone())
             .build();
+
         Label {
             entity: label,
-            render: shape,
-            position,
-            size,
-            text
+            render: self.render,
+            position: self.position,
+            size: self.size,
+            text: self.text
         }
     }
 }
