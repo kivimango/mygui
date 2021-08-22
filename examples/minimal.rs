@@ -1,15 +1,23 @@
-use minifb::{Window, WindowOptions};
-use mygui::{Application, Label};
+use mygui::{Application, Label, Window};
 
 fn main() {
     Application::new()
         .name("mygui minimal example")
-        .window(Window::new("Minimal example", 500, 500, WindowOptions::default()).unwrap())
-        .ui(|ctx| {
-            let label = Label::new("sample text".to_string())
-            .build(ctx);
-            label.entity()
-        })
+        .window(
+            Window::new()
+                .x(100)
+                .y(500)
+                .width(155)
+                .height(355)
+                .title("Minimal example")
+                .unclosable(true)
+                .resizeable(false)
+                .ui(|world| {
+                    let label = Label::new("sample text".to_string()).build(world);
+                    label.entity()
+                })
+                .build(),
+        )
         .build()
         .run();
 }
