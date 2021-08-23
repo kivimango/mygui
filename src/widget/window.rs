@@ -13,7 +13,11 @@ impl Window {
         WindowBuilder::new()
     }
 
-    pub fn inner(&mut self) -> &mut orbclient::Window {
+    pub fn inner(&self) -> &orbclient::Window {
+        &self.inner
+    }
+
+    pub fn inner_mut(&mut self) -> &mut orbclient::Window {
         &mut self.inner
     }
 
