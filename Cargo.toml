@@ -9,8 +9,5 @@ edition = "2018"
 [dependencies]
 font-kit = "0.10.0"
 specs = { version = "0.16.1", features = ["specs-derive"] }
-minifb = "0.19.2"
-tiny-skia = "0.5.1"
+tiny-skia = "0.6.0"
 orbclient = "0.3.31"
-
-pathfinder_geometry = "0.5.1"
