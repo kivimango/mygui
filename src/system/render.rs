@@ -6,6 +6,10 @@ use specs::{Join, ReadStorage, System, World, WorldExt};
 use std::{cell::RefCell, rc::Rc};
 use tiny_skia::*;
 
+/// Renders the visual representation of entities to the screen that has the following composition:
+/// * PositionComponent
+/// * RenderComponent
+/// * SizeComponent
 pub struct RenderingSystem<'w> {
     window: Rc<RefCell<Window>>,
     world: &'w World,
