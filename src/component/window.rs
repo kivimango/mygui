@@ -2,7 +2,7 @@ use specs::{Component, VecStorage};
 
 #[derive(Debug, Default, Clone)]
 pub struct WindowComponent {
-    pub id : u32,
+    pub id: u32,
     pub title: String,
     pub x: i32,
     pub y: i32,

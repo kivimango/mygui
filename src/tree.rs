@@ -1,10 +1,10 @@
-use std::collections::HashMap;
 use specs::Entity;
+use std::collections::HashMap;
 
 pub struct Node {
     pub entity: Entity,
     pub children: HashMap<Entity, Vec<Node>>,
-    pub root: Option<Entity>
+    pub root: Option<Entity>,
 }
 
 impl Node {
@@ -12,13 +12,13 @@ impl Node {
         Node {
             entity,
             children: HashMap::new(),
-            root
+            root,
         }
     }
 
     pub fn append_child(&mut self, parent: &Entity, node: Node) {
         if self.children.contains_key(&parent) {
-            if let Some (children) = self.children.get_mut(&parent) {
+            if let Some(children) = self.children.get_mut(&parent) {
                 children.push(node);
             }
         }
@@ -26,16 +26,14 @@ impl Node {
 }
 
 pub struct EntityTree {
-    root: Node
+    root: Node,
 }
 
 impl EntityTree {
     pub fn new(root: Node) -> EntityTree {
         assert!(root.root.is_none());
 
-        EntityTree {
-            root
-        }
+        EntityTree { root }
     }
 
     pub fn add_child(&mut self, node: Node) {
@@ -49,19 +47,18 @@ impl EntityTree {
     }
 
     pub fn len(&self) -> usize {
-        self.root.children.len() + 1 
+        self.root.children.len() + 1
     }
 
     pub fn root(&self) -> &Node {
         &self.root
     }
-
 }
 
 mod test {
-    use std::collections::HashMap;
-    use specs::{Builder, Entity, World, WorldExt};
     use crate::{EntityTree, Node};
+    use specs::{Builder, Entity, World, WorldExt};
+    use std::collections::HashMap;
 
     #[test]
     fn test_new() {
@@ -71,7 +68,7 @@ mod test {
         let root = Node {
             entity: entity,
             children: HashMap::new(),
-            root: None
+            root: None,
         };
         let tree = EntityTree::new(root);
 

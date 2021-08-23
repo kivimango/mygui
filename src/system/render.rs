@@ -1,20 +1,19 @@
-use crate::{EntityTree, PositionComponent, RenderComponent, Shape, SizeComponent, Window, WindowComponent};
-use orbclient::{Renderer};
+use crate::{
+    EntityTree, PositionComponent, RenderComponent, Shape, SizeComponent, Window, WindowComponent,
+};
+use orbclient::Renderer;
 use specs::{Join, ReadStorage, System, World, WorldExt};
 use std::{cell::RefCell, rc::Rc};
 use tiny_skia::*;
 
 pub struct RenderingSystem<'w> {
     window: Rc<RefCell<Window>>,
-    world: &'w World
+    world: &'w World,
 }
 
 impl<'w> RenderingSystem<'w> {
     pub fn new(window: Rc<RefCell<Window>>, world: &World) -> RenderingSystem {
-        RenderingSystem {
-            window,
-            world
-        }
+        RenderingSystem { window, world }
     }
 }
 
@@ -38,8 +37,17 @@ impl<'s, 'w> System<'s> for RenderingSystem<'w> {
                     todo!("todo: circle shape rendering");
                 }
                 Shape::Rectangle => {
-                    println!("rendering at {} {} : w:{} h:{}", pos.x, pos.y, size.width, size.height);
-                    let rect = Rect::from_xywh(pos.x as f32, pos.y as f32, size.width as f32, size.height as f32).unwrap();
+                    println!(
+                        "rendering at {} {} : w:{} h:{}",
+                        pos.x, pos.y, size.width, size.height
+                    );
+                    let rect = Rect::from_xywh(
+                        pos.x as f32,
+                        pos.y as f32,
+                        size.width as f32,
+                        size.height as f32,
+                    )
+                    .unwrap();
                     pixmap.fill_rect(rect, &brush, Transform::identity(), None);
                 }
             }
@@ -58,7 +66,7 @@ impl<'w> RenderingSystem<'w> {
     }
 
     fn swap_frame_buffer(&mut self, bytes: &mut [u8]) {
-        // frame buffer flipping code is borrowed from orbtk 
+        // frame buffer flipping code is borrowed from orbtk
         // https://github.com/redox-os/orbtk/blob/develop/orbtk_orbclient/src/orbclient/window.rs
         let len = bytes.len() / std::mem::size_of::<orbclient::Color>();
         let color_data = unsafe {
@@ -66,10 +74,13 @@ impl<'w> RenderingSystem<'w> {
         };
 
         if color_data.len() == self.window.borrow().inner().data().len() {
-            self.window.borrow_mut().inner_mut().data_mut().clone_from_slice(color_data);
+            self.window
+                .borrow_mut()
+                .inner_mut()
+                .data_mut()
+                .clone_from_slice(color_data);
         }
 
         self.window.borrow_mut().inner_mut().sync();
     }
-
 }

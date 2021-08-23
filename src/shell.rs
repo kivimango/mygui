@@ -10,8 +10,8 @@ pub struct Shell {
 
 impl Shell {
     pub fn new(window: Window) -> Self {
-        Shell { 
-            window: Rc::new(RefCell::new(window)) 
+        Shell {
+            window: Rc::new(RefCell::new(window)),
         }
     }
 
@@ -60,7 +60,7 @@ impl Shell {
         }
 
         world.maintain();
-        
+
         let mut render_system = RenderingSystem::new(self.window.clone(), &world);
 
         'event_loop: loop {
@@ -100,7 +100,7 @@ fn entity_for_window(window: &orbclient::Window, world: &mut World) -> Entity {
         x: window.x(),
         y: window.y(),
         width: window.width(),
-        height: window.height()
+        height: window.height(),
     };
     world.create_entity().with(window_component).build()
 }

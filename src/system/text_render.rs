@@ -1,5 +1,5 @@
-use specs::{Join, ReadStorage, System};
 use crate::TextComponent;
+use specs::{Join, ReadStorage, System};
 pub struct TextRenderSystem {}
 
 impl<'s> System<'s> for TextRenderSystem {

@@ -2,7 +2,7 @@ use specs::{Component, VecStorage};
 
 #[derive(Debug, Default, Clone)]
 pub struct TextComponent {
-    pub text: String
+    pub text: String,
 }
 
 impl Component for TextComponent {
@@ -11,8 +11,6 @@ impl Component for TextComponent {
 
 impl From<String> for TextComponent {
     fn from(text: String) -> Self {
-        TextComponent {
-            text
-        }
+        TextComponent { text }
     }
 }

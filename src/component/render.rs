@@ -3,12 +3,12 @@ use specs::{Component, VecStorage};
 #[derive(Copy, Clone, Debug)]
 pub enum Shape {
     Circle(f64),
-    Rectangle
+    Rectangle,
 }
 
-#[derive(Copy,  Clone, Debug,)]
+#[derive(Copy, Clone, Debug)]
 pub struct RenderComponent {
-    pub shape: Shape
+    pub shape: Shape,
 }
 
 impl Component for RenderComponent {
