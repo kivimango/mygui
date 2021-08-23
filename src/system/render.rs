@@ -1,58 +1,75 @@
-
-use std::{cell::{RefCell}, rc::Rc};
-use specs::{Join, ReadStorage, System};
+use crate::{EntityTree, PositionComponent, RenderComponent, Shape, SizeComponent, Window, WindowComponent};
+use orbclient::{Renderer};
+use specs::{Join, ReadStorage, System, World, WorldExt};
+use std::{cell::RefCell, rc::Rc};
 use tiny_skia::*;
-use crate::{PositionComponent, RenderComponent, Shape, SizeComponent};
 
-pub struct RenderingSystem {
-    frame_buffer: Rc<RefCell<Vec<u32>>>
+pub struct RenderingSystem<'w> {
+    window: Rc<RefCell<Window>>,
+    world: &'w World
 }
 
-impl RenderingSystem {
-    pub fn new(fb: &Rc<RefCell<Vec<u32>>>) -> RenderingSystem {
+impl<'w> RenderingSystem<'w> {
+    pub fn new(window: Rc<RefCell<Window>>, world: &World) -> RenderingSystem {
         RenderingSystem {
-            frame_buffer: fb.clone()
+            window,
+            world
         }
     }
 }
 
-impl<'s> System<'s> for RenderingSystem {
-    type SystemData = (ReadStorage<'s, PositionComponent>, ReadStorage<'s, RenderComponent>, ReadStorage<'s, SizeComponent>);
+impl<'s, 'w> System<'s> for RenderingSystem<'w> {
+    type SystemData = (
+        ReadStorage<'s, PositionComponent>,
+        ReadStorage<'s, RenderComponent>,
+        ReadStorage<'s, SizeComponent>,
+    );
 
     fn run(&mut self, (pos, render, size): Self::SystemData) {
-        // TODO: implement a 2DRenderingContext maybe ?
-        let bg_color = Color::from_rgba8(246, 245, 244, 100);
-
-        let mut paint = Paint::default();
-        paint.set_color(bg_color);
-        paint.anti_alias = true;
-
-        let mut p = Pixmap::new(500, 500).unwrap();
-        let pixmap = PixmapMut::from(p.as_mut());
-        let mut canvas = Canvas::from(pixmap);
-
-        let background = Rect::from_xywh(0.0, 0.0, 500.0, 500.0).unwrap();
-        canvas.fill_rect(background, &paint);
+        let (width, height) = self.get_window_comp_size();
+        let mut pixmap = Pixmap::new(width, height).unwrap();
+        let mut brush = Paint::default();
+        brush.set_color_rgba8(50, 127, 150, 200);
+        brush.anti_alias = true;
 
         for (pos, render, size) in (&pos, &render, &size).join() {
             match render.shape {
                 Shape::Circle(_radius) => {
-                    println!("todo: circle shape rendering");
+                    todo!("todo: circle shape rendering");
                 }
                 Shape::Rectangle => {
+                    println!("rendering at {} {} : w:{} h:{}", pos.x, pos.y, size.width, size.height);
                     let rect = Rect::from_xywh(pos.x as f32, pos.y as f32, size.width as f32, size.height as f32).unwrap();
-                    paint.set_color_rgba8(50,127, 150, 200);
-                    canvas.fill_rect(rect, &paint);
+                    pixmap.fill_rect(rect, &brush, Transform::identity(), None);
                 }
             }
+        }
 
-            let data: Vec<u32> = canvas.pixmap().pixels_mut().iter()
-                .map(|p| {
-                    p.get()
-                })
-                .collect();
-            self.frame_buffer.borrow_mut().copy_from_slice(&data);
-        }        
+        self.swap_frame_buffer(pixmap.data_mut());
     }
 }
 
+impl<'w> RenderingSystem<'w> {
+    fn get_window_comp_size(&self) -> (u32, u32) {
+        let window = self.world.fetch::<EntityTree>().root().entity;
+        let store = self.world.read_storage::<WindowComponent>();
+        let window_component = store.get(window).unwrap();
+        (window_component.width, window_component.height)
+    }
+
+    fn swap_frame_buffer(&mut self, bytes: &mut [u8]) {
+        // frame buffer flipping code is borrowed from orbtk 
+        // https://github.com/redox-os/orbtk/blob/develop/orbtk_orbclient/src/orbclient/window.rs
+        let len = bytes.len() / std::mem::size_of::<orbclient::Color>();
+        let color_data = unsafe {
+            std::slice::from_raw_parts_mut(bytes.as_mut_ptr() as *mut orbclient::Color, len)
+        };
+
+        if color_data.len() == self.window.borrow().inner().data().len() {
+            self.window.borrow_mut().inner_mut().data_mut().clone_from_slice(color_data);
+        }
+
+        self.window.borrow_mut().inner_mut().sync();
+    }
+
+}
