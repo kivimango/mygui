@@ -56,6 +56,17 @@ impl<'s, 'w> System<'s> for RenderingSystem<'w> {
                         brush.set_color(tiny_skia::Color::from_rgba8(0, 0, 0, 0,));
                     }
                     pixmap.fill_rect(rect, &brush, Transform::identity(), None);
+
+                    // draw border around widget rectangle
+                    // TODO: implement rounded border
+                    if let Some(border) = render.border {
+                        let path = PathBuilder::from_rect(rect);
+                        let tinyskia_color = tiny_skia::Color::from_rgba8(border.color.r(), border.color.g(), border.color.b(), border.color.a());
+                        brush.set_color(tinyskia_color);
+                        let mut stroke = Stroke::default();
+                        stroke.width = border.top;
+                        pixmap.stroke_path(&path, &brush, &stroke, Transform::identity(), None);
+                    }
                 }
             }
         }
