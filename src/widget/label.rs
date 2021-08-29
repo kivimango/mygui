@@ -1,4 +1,4 @@
-use crate::{component::TextComponent, PositionComponent, RenderComponent, Shape, SizeComponent};
+use crate::{Border, PositionComponent, RenderComponent, Shape, SizeComponent, component::TextComponent};
 use orbclient::Color;
 use specs::{Builder, Entity, World, WorldExt};
 
@@ -15,6 +15,7 @@ impl Label {
 
 pub struct LabelBuilder {
     background: Option<Color>,
+    border: Option<Border>,
     position: PositionComponent,
     size: SizeComponent,
     text: String,
@@ -24,6 +25,7 @@ impl LabelBuilder {
     pub fn new() -> LabelBuilder {
         LabelBuilder {
             background: None,
+            border: None,
             position: PositionComponent::default(),
             size: SizeComponent {
                 width: LABEL_DEFAULT_WIDTH,
@@ -35,6 +37,11 @@ impl LabelBuilder {
 
     pub fn background(mut self, bg_color: Color) -> LabelBuilder {
         self.background = Some(bg_color);
+        self
+    }
+
+    pub fn border(mut self, border: Border) -> LabelBuilder {
+        self.border = Some(border);
         self
     }
 
@@ -61,6 +68,7 @@ impl LabelBuilder {
 
         let render_component = RenderComponent {
             background: self.background,
+            border: self.border,
             shape: Shape::Rectangle,
         };
         let text = TextComponent {
