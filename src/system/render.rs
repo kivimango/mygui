@@ -31,9 +31,6 @@ impl<'s, 'w> System<'s> for RenderingSystem<'w> {
     fn run(&mut self, (pos, render, size): Self::SystemData) {
         let (width, height) = self.get_window_comp_size();
         let mut pixmap = Pixmap::new(width, height).unwrap();
-        let mut brush = Paint::default();
-        brush.set_color_rgba8(50, 127, 150, 200);
-        brush.anti_alias = true;
 
         for (pos, render, size) in (&pos, &render, &size).join() {
             match render.shape {
@@ -41,10 +38,6 @@ impl<'s, 'w> System<'s> for RenderingSystem<'w> {
                     todo!("todo: circle shape rendering");
                 }
                 Shape::Rectangle => {
-                    println!(
-                        "rendering at {} {} : w:{} h:{}",
-                        pos.x, pos.y, size.width, size.height
-                    );
                     let rect = Rect::from_xywh(
                         pos.x as f32,
                         pos.y as f32,
@@ -52,6 +45,16 @@ impl<'s, 'w> System<'s> for RenderingSystem<'w> {
                         size.height as f32,
                     )
                     .unwrap();
+                    let mut brush = Paint::default();
+                    brush.anti_alias = true;
+                    
+                    if let Some(bg_color) = render.background {
+                        let tinyskia_color = tiny_skia::Color::from_rgba8(bg_color.r(), bg_color.g(), bg_color.b(), bg_color.a());
+                        brush.set_color(tinyskia_color);
+                    } else {
+                        // transparent background
+                        brush.set_color(tiny_skia::Color::from_rgba8(0, 0, 0, 0,));
+                    }
                     pixmap.fill_rect(rect, &brush, Transform::identity(), None);
                 }
             }
