@@ -1,4 +1,5 @@
 use crate::{component::TextComponent, PositionComponent, RenderComponent, Shape, SizeComponent};
+use orbclient::Color;
 use specs::{Builder, Entity, World, WorldExt};
 
 const LABEL_DEFAULT_WIDTH: usize = 150;
@@ -13,25 +14,28 @@ impl Label {
 }
 
 pub struct LabelBuilder {
+    background: Option<Color>,
     position: PositionComponent,
-    render: RenderComponent,
     size: SizeComponent,
-    text: TextComponent,
+    text: String,
 }
 
 impl LabelBuilder {
     pub fn new() -> LabelBuilder {
         LabelBuilder {
+            background: None,
             position: PositionComponent::default(),
-            render: RenderComponent {
-                shape: Shape::Rectangle,
-            },
             size: SizeComponent {
                 width: LABEL_DEFAULT_WIDTH,
                 height: LABEL_DEFAULT_HEIGHT,
             },
-            text: TextComponent::default(),
+            text: String::new(),
         }
+    }
+
+    pub fn background(mut self, bg_color: Color) -> LabelBuilder {
+        self.background = Some(bg_color);
+        self
     }
 
     pub fn position(mut self, x: usize, y: usize) -> LabelBuilder {
@@ -45,7 +49,7 @@ impl LabelBuilder {
     }
 
     pub fn text(mut self, text: String) -> Self {
-        self.text = TextComponent { text };
+        self.text = text;
         self
     }
 
@@ -55,12 +59,20 @@ impl LabelBuilder {
         world.register::<TextComponent>();
         world.register::<SizeComponent>();
 
+        let render_component = RenderComponent {
+            background: self.background,
+            shape: Shape::Rectangle,
+        };
+        let text = TextComponent {
+            text: self.text
+        };
+
         world
             .create_entity()
             .with(self.position)
-            .with(self.render)
+            .with(render_component)
             .with(self.size)
-            .with(self.text.clone())
+            .with(text)
             .build()
     }
 }
