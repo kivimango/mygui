@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 font-kit = "0.10.0"
+orbclient = "0.3.31"
+rusttype = "0.9.2"
 specs = { version = "0.16.1", features = ["specs-derive"] }
 tiny-skia = "0.6.0"
-orbclient = "0.3.31"
