@@ -1,10 +1,52 @@
-use crate::{
-    EntityTree, PositionComponent, RenderComponent, Shape, SizeComponent, Window, WindowComponent,
-};
+use crate::{EntityTree, PositionComponent, RenderComponent, Shape, SizeComponent, TextComponent, Window, WindowComponent};
 use orbclient::Renderer;
+use rusttype::{OutlineBuilder, Point, PositionedGlyph, Scale, point};
 use specs::{Join, ReadStorage, System, World, WorldExt};
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use tiny_skia::*;
+
+pub const DEFAULT_FONT_FAMILY: &'static[u8] = include_bytes!("../../assets/fonts/Roboto-Medium.ttf");
+
+struct GlyphTracer {
+    path_builder: PathBuilder,
+    position: Point<f32>
+}
+
+impl GlyphTracer {
+    #[inline(always)]
+    fn map_point(&self, x: f32, y: f32) -> (f32, f32) {
+        (self.position.x + x, self.position.y + y)
+    }
+}
+
+impl OutlineBuilder for GlyphTracer {
+    fn move_to(&mut self, x: f32, y: f32) {
+        let (x, y) = self.map_point(x, y);
+        self.path_builder.move_to(x, y);
+    }
+
+    fn line_to(&mut self, x: f32, y: f32) {
+        let (x, y) = self.map_point(x, y);
+        self.path_builder.line_to(x, y);
+    }
+
+    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
+        let (x, y) = self.map_point(x, y);
+        let (x1, y1) = self.map_point(x1, y1);
+        self.path_builder.quad_to(x1, y1, x, y);
+    }
+
+    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
+        let (x, y) = self.map_point(x, y);
+        let (x1, y1) = self.map_point(x1, y1);
+        let (x2, y2) = self.map_point(x2, y2);
+        self.path_builder.cubic_to(x1, y1, x2, y2, x, y);
+    }
+
+    fn close(&mut self) {
+        self.path_builder.close();
+    }
+}
 
 /// Renders the visual representation of entities to the screen that has the following composition:
 /// * PositionComponent
@@ -13,11 +55,17 @@ use tiny_skia::*;
 pub struct RenderingSystem<'w> {
     window: Rc<RefCell<Window>>,
     world: &'w World,
+    fonts: HashMap<String, rusttype::Font<'static>>
 }
 
 impl<'w> RenderingSystem<'w> {
     pub fn new(window: Rc<RefCell<Window>>, world: &World) -> RenderingSystem {
-        RenderingSystem { window, world }
+        let mut fonts: HashMap<String, rusttype::Font> = HashMap::new();
+        let result = rusttype::Font::try_from_bytes(DEFAULT_FONT_FAMILY);
+        if let Some(f) = result {
+            fonts.insert("Roboto-Medium".to_string(), f);
+        }
+        RenderingSystem { window, world, fonts }
     }
 }
 
@@ -70,6 +118,8 @@ impl<'s, 'w> System<'s> for RenderingSystem<'w> {
                 }
             }
         }
+        
+        self.render_text(&mut pixmap);
 
         self.swap_frame_buffer(pixmap.data_mut());
     }
@@ -81,6 +131,56 @@ impl<'w> RenderingSystem<'w> {
         let store = self.world.read_storage::<WindowComponent>();
         let window_component = store.get(window).unwrap();
         (window_component.width, window_component.height)
+    }
+
+    fn render_text(&self, pixmap: &mut Pixmap) {
+        let positions = self.world.read_storage::<PositionComponent>();
+        let texts = self.world.read_storage::<TextComponent>();
+
+        for (position, text_comp) in (&positions, &texts).join() {
+            // text rendering code is based on orbtk
+            // https://github.com/redox-os/orbtk/blob/develop/orbtk_tinyskia/src/tinyskia/font.rs
+            if let Some(font) = self.fonts.get(&text_comp.font_family) {
+                let scale = Scale::uniform(text_comp.font_size as f32);
+
+                // The origin of a line of text is at the baseline (roughly where non-descending letters sit).
+                // We don't want to clip the text, so we shift it down with an offset when laying it out.
+                // v_metrics.ascent is the distance between the baseline and the highest edge of any glyph in
+                // the font. That's enough to guarantee that there's no clipping.
+                let v_metrics = font.v_metrics(scale);
+                let offset = point(0.0, v_metrics.ascent);
+                let glyphs: Vec<PositionedGlyph> = font.layout(text_comp.text.as_str(), scale, offset).collect();
+                let mut glyph_tracer = GlyphTracer {
+                    path_builder: PathBuilder::new(),
+                    position: point(0.0, 0.0)
+                };
+    
+                for g in glyphs.iter() {
+                    let mut gpos = match g.pixel_bounding_box() {
+                        Some(bbox) => rusttype::point(bbox.min.x as f32, bbox.min.y as f32),
+                        None => {
+                            continue;
+                        }
+                    };
+                    gpos.x += position.x as f32;
+                    gpos.y += position.y as f32;
+                    glyph_tracer.position = gpos;
+                    g.build_outline(&mut glyph_tracer);
+                }
+    
+                let mut brush = Paint::default();
+                brush.anti_alias = true;
+                let text_color = tiny_skia::Color::from_rgba8(text_comp.text_color.r(), text_comp.text_color.g(), text_comp.text_color.b(), text_comp.text_color.a());
+                brush.set_color(text_color);
+    
+                if let Some(path) = glyph_tracer.path_builder.finish() {
+                    pixmap.fill_path(&path, &brush, FillRule::Winding, Transform::identity(), None);
+                }   
+            }
+            // else {
+            // TODO: load fonts lazily, cross-platform font loader ???
+            //}
+        }
     }
 
     fn swap_frame_buffer(&mut self, bytes: &mut [u8]) {
