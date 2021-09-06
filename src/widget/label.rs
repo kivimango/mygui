@@ -1,3 +1,5 @@
+use std::usize;
+
 use crate::{Border, PositionComponent, RenderComponent, Shape, SizeComponent, component::TextComponent};
 use orbclient::Color;
 use specs::{Builder, Entity, World, WorldExt};
@@ -16,9 +18,12 @@ impl Label {
 pub struct LabelBuilder {
     background: Option<Color>,
     border: Option<Border>,
+    font_family: String,
+    font_size: usize,
     position: PositionComponent,
     size: SizeComponent,
     text: String,
+    text_color: orbclient::Color
 }
 
 impl LabelBuilder {
@@ -26,12 +31,15 @@ impl LabelBuilder {
         LabelBuilder {
             background: None,
             border: None,
+            font_family: "Roboto-Medium".to_string(),
+            font_size: 12,
             position: PositionComponent::default(),
             size: SizeComponent {
                 width: LABEL_DEFAULT_WIDTH,
                 height: LABEL_DEFAULT_HEIGHT,
             },
             text: String::new(),
+            text_color: orbclient::Color::rgba(255, 255, 255, 255)
         }
     }
 
@@ -42,6 +50,16 @@ impl LabelBuilder {
 
     pub fn border(mut self, border: Border) -> LabelBuilder {
         self.border = Some(border);
+        self
+    }
+
+    pub fn font_family(mut self, font: String) -> LabelBuilder {
+        self.font_family = font;
+        self
+    }
+
+    pub fn font_size(mut self, font_size: usize) -> LabelBuilder {
+        self.font_size = font_size;
         self
     }
 
@@ -60,6 +78,11 @@ impl LabelBuilder {
         self
     }
 
+    pub fn text_color(mut self, color: orbclient::Color) -> LabelBuilder {
+        self.text_color = color;
+        self
+    }
+
     pub fn build(self, world: &mut World) -> Entity {
         world.register::<PositionComponent>();
         world.register::<RenderComponent>();
@@ -72,7 +95,10 @@ impl LabelBuilder {
             shape: Shape::Rectangle,
         };
         let text = TextComponent {
-            text: self.text
+            font_family: self.font_family.to_string(),
+            font_size: self.font_size,
+            text: self.text,
+            text_color: self.text_color
         };
 
         world
