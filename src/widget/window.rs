@@ -1,7 +1,8 @@
 use orbclient::WindowFlag;
 use specs::{Entity, World};
+use vec_tree::{Index};
 
-type UiBuilder = dyn 'static + Fn(&mut World) -> Entity;
+type UiBuilder = dyn 'static + Fn(&mut World, Index) -> (Entity, Option<Index>);
 
 pub struct Window {
     inner: orbclient::Window,
@@ -108,7 +109,7 @@ impl WindowBuilder {
     }
 
     /// Defines the UI of the window.
-    pub fn ui<F: 'static + Fn(&mut World) -> Entity>(mut self, ui_builder: F) -> Self {
+    pub fn ui<F: 'static + Fn(&mut World, Index) -> (Entity, Option<Index>)>(mut self, ui_builder: F) -> Self {
         self.ui = Some(Box::new(ui_builder));
         self
     }
