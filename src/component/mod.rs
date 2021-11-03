@@ -1,9 +1,11 @@
+pub(crate) mod layout;
 mod position;
 mod render;
 mod size;
 mod text;
 mod window;
 
+pub use self::layout::*;
 pub use self::position::*;
 pub use self::render::*;
 pub use self::size::*;
