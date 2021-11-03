@@ -379,6 +379,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "generational-arena"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e1d3b771574f62d0548cee0ad9057857e9fc25d7a3335f140c84f6acd0bf601"
+dependencies = [
+ "cfg-if 0.1.10",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -475,6 +484,7 @@ dependencies = [
  "rusttype",
  "specs",
  "tiny-skia",
+ "vec-tree",
 ]
 
 [[package]]
@@ -871,6 +881,15 @@ dependencies = [
  "encoding_rs",
  "lazy_static",
  "regex",
+]
+
+[[package]]
+name = "vec-tree"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b13a87f8563cac3b8170c7a6b0b641fdd29199a128c63b7a389556fc84f1d5e6"
+dependencies = [
+ "generational-arena",
 ]
 
 [[package]]

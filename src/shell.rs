@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
-
-use crate::{EntityTree, Node, RenderingSystem, Window, WindowComponent};
+use crate::{LayoutComponent, RenderingSystem, Window, WindowComponent, layout_system};
 use orbclient::{Event, EventOption, Renderer, ResizeEvent};
 use specs::{Builder, Entity, RunNow, World, WorldExt};
+use vec_tree::VecTree;
 
 pub struct Shell {
     window: Rc<RefCell<Window>>,
@@ -42,21 +42,22 @@ impl Shell {
 
     pub fn run(&mut self) {
         let mut world = World::new();
+        let mut tree = VecTree::new();
         let root;
+        let root_idx;
         // TODO: workaround the Rc<RefCell>> mess
         {
             let wb = self.window.borrow();
             root = entity_for_window(wb.inner(), &mut world);
+            root_idx = tree.insert_root(root);
+            world.insert(tree);
         }
 
-        if let Some(ui_builder) = self.window.borrow().ui() {
-            let ui = ui_builder(&mut world);
-            let mut root_node = Node::new(root, None);
-            let ui_node = Node::new(ui, Some(root));
-            root_node.append_child(&root, ui_node);
+        world.register::<LayoutComponent>();
 
-            let entity_tree = EntityTree::new(root_node);
-            world.insert(entity_tree);
+        if let Some(ui_builder) = self.window.borrow().ui() {
+            let ui = ui_builder(&mut world, root_idx);
+            //tree.insert(ui.0, root_idx);
         }
 
         world.maintain();
@@ -78,7 +79,9 @@ impl Shell {
                 }
             }
 
+            layout_system(&world);
             render_system.run_now(&world);
+
         }
     }
 }

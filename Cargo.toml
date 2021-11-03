@@ -13,3 +13,4 @@ rusttype = "0.9.2"
 # WindowComponent and LayoutComponent aren't Sync, so disable specs's parallelism feature
 specs = { version = "0.16.1", default-features = false, features = ["specs-derive"] }
 tiny-skia = "0.6.0"
+vec-tree = "0.1"
