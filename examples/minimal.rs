@@ -1,5 +1,5 @@
-use mygui::{Application, Border, Label, Window};
-use orbclient::{Color};
+use mygui::{Application, Border, Center, Label, Window};
+use orbclient::Color;
 
 fn main() {
     Application::new()
@@ -11,17 +11,22 @@ fn main() {
                 .width(155)
                 .height(355)
                 .title("Minimal example")
-                .ui(|world| {
-                    Label::new("sample text".to_string())
-                        .background(Color::rgb(125, 100, 75))
-                        .border(Border::new()
-                            .color( orbclient::Color::rgba(12, 255, 12, 255))
-                            .width(1.0)
-                            .build()
+                .ui(|world, root_idx| {
+                    Center::new()
+                        .child(
+                            Label::new("sample text".to_string())
+                                .background(Color::rgb(125, 100, 75))
+                                .border(
+                                    Border::new()
+                                    .color(Color::rgba(12, 255, 12, 255))
+                                    .width(1.0)
+                                    .build()
+                                )
+                            .position(5, 5)
+                            .size(110, 75)
+                            .build(world)
                         )
-                        .position(5, 5)
-                        .size(110, 75)
-                        .build(world)
+                        .build(world, root_idx)
                 })
                 .build(),
         )
