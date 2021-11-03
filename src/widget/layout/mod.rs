@@ -1,5 +1,4 @@
 mod center;
-mod rectangle;
 
 use specs::{Entity, World};
 use crate::{Constraints, DesiredSize, Layout};
