@@ -65,6 +65,34 @@ impl WindowBuilder {
         self
     }
 
+    /// Resizes and places the center of the window to the center of the screen.
+    /// 
+    /// Notes:
+    /// * Calling this method has no effect when the application cannot determine the screen size.
+    /// * Calling [width()](#method.width), [height()](#method.height), [x()](#method.x), [y()](#method.y)
+    /// or [maximized()](#method.maximized) after this method will overwrite this method's behavior.
+    pub fn centered(mut self) -> Self {
+        use std::convert::TryFrom;
+
+        match orbclient::get_display_size() {
+            Ok(screen_size) => {
+                if self.width > screen_size.0 || self.height > screen_size.1 {
+                    self.width = screen_size.0;
+                    self.height = screen_size.1;
+                }
+
+                self.width = screen_size.0 / 2;
+                self.height = screen_size.1 / 2;
+                self.x = i32::try_from((screen_size.0 - self.width) / 2).unwrap_or(0);
+                self.y = i32::try_from((screen_size.1 - self.height) / 2).unwrap_or(0);
+            }
+            Err(msg) => {
+                eprintln!("Cannot determine screen size: {}", msg);
+            }
+        }
+        self
+    }
+
     /// Starting height of the window in pixels.
     pub fn height(mut self, height: u32) -> Self {
         self.height = height;
@@ -74,7 +102,7 @@ impl WindowBuilder {
     /// Sets the window to the maximum available size.
     ///
     /// # Errors
-    /// Calling this method has no effect when the applciation cannot determine the screen size.
+    /// Calling this method has no effect when the application cannot determine the screen size.
     pub fn maximized(mut self) -> Self {
         match orbclient::get_display_size() {
             Ok(screen_size) => {
