@@ -6,10 +6,7 @@ fn main() {
         .name("mygui minimal example")
         .window(
             Window::new()
-                .x(500)
-                .y(500)
-                .width(155)
-                .height(355)
+                .centered()
                 .title("Minimal example")
                 .ui(|world| {
                     Label::new("sample text".to_string())
