@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{EntityTree, Node, RenderingSystem, Window, WindowComponent, state_system};
+use crate::{EntityTree, Node, RenderingSystem, Window, WindowComponent, init_states, state_system};
 use orbclient::{Event, EventOption, Renderer, ResizeEvent};
 use specs::{Builder, Entity, RunNow, World, WorldExt};
 
@@ -61,6 +61,7 @@ impl Shell {
 
         world.maintain();
 
+        init_states(&mut world);
         state_system(&mut world);
 
         let mut render_system = RenderingSystem::new(self.window.clone(), &world);
