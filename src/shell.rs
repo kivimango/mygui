@@ -1,17 +1,19 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{EntityTree, Node, RenderingSystem, Window, WindowComponent, init_states, state_system};
-use orbclient::{Event, EventOption, Renderer, ResizeEvent};
+use crate::{EntityTree, Node, RenderingSystem, Window, WindowComponent, init_states, state_system, mouse_system};
+use orbclient::{Event, EventOption, MouseEvent, Renderer, ResizeEvent};
 use specs::{Builder, Entity, RunNow, World, WorldExt};
 
 pub struct Shell {
     window: Rc<RefCell<Window>>,
+    mouse_pos: MouseEvent
 }
 
 impl Shell {
     pub fn new(window: Window) -> Self {
         Shell {
             window: Rc::new(RefCell::new(window)),
+            mouse_pos: MouseEvent {x: 0, y:0}
         }
     }
 
@@ -69,11 +71,17 @@ impl Shell {
         'event_loop: loop {
             for event in self.window.borrow_mut().inner_mut().events() {
                 match event.to_option() {
+                    EventOption::Button(button_event) => {
+                        println!("mouse event received");
+                        mouse_system(&world, self.mouse_pos, button_event);
+                    }
                     EventOption::Quit(_) => {
                         break 'event_loop;
                     }
                     EventOption::Key(key_event) => println!("key event: {}", key_event.character),
-                    EventOption::Mouse(_) => {}
+                    EventOption::Mouse(mouse_pos) => {
+                        self.mouse_pos = mouse_pos;
+                    }
                     EventOption::Resize(resize_event) => {
                         sync_window_size(root, &world, resize_event);
                     }
