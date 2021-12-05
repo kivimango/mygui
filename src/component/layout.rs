@@ -18,6 +18,6 @@ impl Component for LayoutComponent {
 #[derive(Debug)]
 pub struct DesiredSize {
     pub dirty: bool,
-    pub width: usize,
-    pub height: usize
+    pub width: u32,
+    pub height: u32
 }
