@@ -10,7 +10,7 @@ edition = "2018"
 font-kit = "0.10.0"
 orbclient = "0.3.31"
 rusttype = "0.9.2"
-# WindowComponent and LayoutComponent aren't Sync, so disable specs's parallelism feature
-specs = { version = "0.16.1", default-features = false, features = ["specs-derive"] }
+# WindowComponent and LayoutComponent aren't Sync, so we need to disable specs's parallelism feature
+specs = { version = "0.17.0", default-features = false, features = ["specs-derive"] }
 tiny-skia = "0.6.0"
-vec-tree = "0.1"
+indextree = "4.3.1"
