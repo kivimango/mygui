@@ -1,5 +1,5 @@
-use std::{cell::RefCell, rc::Rc};
-use crate::{EntityTree, LayoutComponent, RenderingSystem, Window, WindowComponent, layout_system};
+use std::{cell::{Ref, RefCell}, rc::Rc};
+use crate::{Constraints, EntityTree, LayoutComponent, NoopLayout, RenderingSystem, Window, WindowComponent, layout_system};
 use orbclient::{Event, EventOption, Renderer, ResizeEvent};
 use specs::{Builder, Entity, RunNow, World, WorldExt};
 
@@ -47,13 +47,11 @@ impl Shell {
         // TODO: workaround the Rc<RefCell>> mess
         {
             let wb = self.window.borrow();
-            root = entity_for_window(wb.inner(), &mut world);
+            root = entity_for_window(wb, &mut world);
             tree.add_node(root);
             root_id = tree.set_root(root);
             world.insert(tree);
         }
-
-        world.register::<LayoutComponent>();
 
         if let Some(ui_builder) = self.window.borrow().ui() {
             let child_of_root = ui_builder(&mut world);
@@ -97,15 +95,29 @@ fn sync_window_size(window_id: Entity, world: &World, event: ResizeEvent) {
     }
 }
 
-fn entity_for_window(window: &orbclient::Window, world: &mut World) -> Entity {
+fn entity_for_window(window: Ref<Window>, world: &mut World) -> Entity {
+    world.register::<LayoutComponent>();
     world.register::<WindowComponent>();
-    let window_component = WindowComponent {
-        id: window.id(),
-        title: window.title(),
-        x: window.x(),
-        y: window.y(),
-        width: window.width(),
-        height: window.height(),
+    
+    let layout = LayoutComponent {
+        constraints: Constraints {
+            min_width: window.min_width(),
+            min_height: window.min_height(),
+            max_width: window.max_width(),
+            max_height: window.max_height(),
+        },
+        object: Box::new(NoopLayout{})
     };
-    world.create_entity().with(window_component).build()
+    let window_component = WindowComponent {
+        id: window.inner().id(),
+        title: window.inner().title(),
+        x: window.inner().x(),
+        y: window.inner().y(),
+        width: window.inner().width(),
+        height: window.inner().height(),
+    };
+    world.create_entity()
+        .with(window_component)
+        .with(layout)
+        .build()
 }
