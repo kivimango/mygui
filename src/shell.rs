@@ -1,8 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
-use crate::{LayoutComponent, RenderingSystem, Window, WindowComponent, layout_system};
+use crate::{EntityTree, LayoutComponent, RenderingSystem, Window, WindowComponent, layout_system};
 use orbclient::{Event, EventOption, Renderer, ResizeEvent};
 use specs::{Builder, Entity, RunNow, World, WorldExt};
-use vec_tree::VecTree;
 
 pub struct Shell {
     window: Rc<RefCell<Window>>,
@@ -42,22 +41,25 @@ impl Shell {
 
     pub fn run(&mut self) {
         let mut world = World::new();
-        let mut tree = VecTree::new();
+        let mut tree = EntityTree::new();
         let root;
-        let root_idx;
+        let root_id;
         // TODO: workaround the Rc<RefCell>> mess
         {
             let wb = self.window.borrow();
             root = entity_for_window(wb.inner(), &mut world);
-            root_idx = tree.insert_root(root);
+            tree.add_node(root);
+            root_id = tree.set_root(root);
             world.insert(tree);
         }
 
         world.register::<LayoutComponent>();
 
         if let Some(ui_builder) = self.window.borrow().ui() {
-            let ui = ui_builder(&mut world, root_idx);
-            //tree.insert(ui.0, root_idx);
+            let child_of_root = ui_builder(&mut world);
+            let mut tree = world.write_resource::<EntityTree>();
+            let child_id = tree.add_node(child_of_root);
+            tree.append_child(root_id, child_id);
         }
 
         world.maintain();

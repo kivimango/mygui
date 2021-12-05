@@ -1,8 +1,7 @@
-use crate::{PositionComponent, RenderComponent, Shape, SizeComponent, TextComponent, Window, WindowComponent};
+use crate::{EntityTree, PositionComponent, RenderComponent, Shape, SizeComponent, TextComponent, Window, WindowComponent};
 use orbclient::Renderer;
 use rusttype::{OutlineBuilder, Point, PositionedGlyph, Scale, point};
-use specs::{Entity, Join, ReadStorage, System, World, WorldExt};
-use vec_tree::VecTree;
+use specs::{Join, ReadStorage, System, World, WorldExt};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use tiny_skia::*;
 
@@ -128,13 +127,11 @@ impl<'s, 'w> System<'s> for RenderingSystem<'w> {
 
 impl<'w> RenderingSystem<'w> {
     fn get_window_comp_size(&self) -> (u32, u32) {
-        let tree = self.world.fetch::<VecTree<Entity>>();
-        let window_idx = tree.get_root_index()
-            .expect("Root widget not found in the EntityTree! Please set a Window widget as a root of the tree.");
-        let window = tree.get(window_idx)
+        let tree = self.world.fetch::<EntityTree>();
+        let window = tree.root()
             .expect("Root widget not found in the EntityTree! Please set a Window widget as a root of the tree.");
         let store = self.world.read_storage::<WindowComponent>();
-        let window_component = store.get(*window).unwrap();
+        let window_component = store.get(window).unwrap();
         (window_component.width, window_component.height)
     }
 

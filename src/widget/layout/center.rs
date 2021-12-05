@@ -1,6 +1,5 @@
 use specs::{Builder, Entity, World, WorldExt};
-use vec_tree::{Index, VecTree};
-use crate::{Constraints, DesiredSize, Layout, LayoutComponent, PositionComponent};
+use crate::{EntityTree, Constraints, DesiredSize, Layout, LayoutComponent, PositionComponent};
 
 pub struct Center {}
 
@@ -27,7 +26,7 @@ impl CenterBuilder {
         self
     }
 
-    pub fn build(self, world: &mut World, parent_idx: Index) -> (Entity, Option<Index>) {
+    pub fn build(self, world: &mut World) -> Entity {
         println!("bulding Center");
         world.register::<LayoutComponent>();
         
@@ -46,12 +45,13 @@ impl CenterBuilder {
         .build();
 
         if let Some(child) = self.child {
-            let mut tree = world.write_resource::<VecTree<Entity>>();
-            let layout_idx = tree.insert(child, parent_idx);
-            return (widget, Some(layout_idx))
+            let mut tree = world.write_resource::<EntityTree>();
+            let child_id = tree.add_node(child);
+            let parent_id = tree.add_node(widget);
+            tree.append_child(parent_id, child_id);
         }
 
-        (widget, None)
+        widget
     }
 }
 
