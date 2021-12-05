@@ -11,7 +11,7 @@ fn main() {
                 .width(155)
                 .height(355)
                 .title("Minimal example")
-                .ui(|world, root_idx| {
+                .ui(|world| {
                     Center::new()
                         .child(
                             Label::new("sample text".to_string())
@@ -26,7 +26,7 @@ fn main() {
                             .size(110, 75)
                             .build(world)
                         )
-                        .build(world, root_idx)
+                        .build(world)
                 })
                 .build(),
         )
