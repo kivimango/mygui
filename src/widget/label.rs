@@ -63,7 +63,7 @@ impl LabelBuilder {
         self
     }
 
-    pub fn position(mut self, x: usize, y: usize) -> LabelBuilder {
+    pub fn position(mut self, x: u32, y: u32) -> LabelBuilder {
         self.position = PositionComponent { x, y };
         self
     }

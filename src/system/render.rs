@@ -127,7 +127,9 @@ impl<'s, 'w> System<'s> for RenderingSystem<'w> {
 
 impl<'w> RenderingSystem<'w> {
     fn get_window_comp_size(&self) -> (u32, u32) {
-        let window = self.world.fetch::<EntityTree>().root().entity;
+        let tree = self.world.fetch::<EntityTree>();
+        let window = tree.root()
+            .expect("Root widget not found in the EntityTree! Please set a Window widget as a root of the tree.");
         let store = self.world.read_storage::<WindowComponent>();
         let window_component = store.get(window).unwrap();
         (window_component.width, window_component.height)

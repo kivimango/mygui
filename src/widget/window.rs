@@ -5,6 +5,10 @@ type UiBuilder = dyn 'static + Fn(&mut World) -> Entity;
 
 pub struct Window {
     inner: orbclient::Window,
+    max_height: u32,
+    max_width: u32,
+    min_height: u32,
+    min_width: u32,
     ui: Option<Box<UiBuilder>>,
 }
 
@@ -21,6 +25,22 @@ impl Window {
         &mut self.inner
     }
 
+    pub fn min_height(&self) -> u32 {
+        self.min_height
+    }
+
+    pub fn min_width(&self) -> u32 {
+        self.min_width
+    }
+
+    pub fn max_height(&self) -> u32 {
+        self.max_height
+    }
+
+    pub fn max_width(&self) -> u32 {
+        self.max_width
+    }
+
     pub fn ui(&self) -> &Option<Box<UiBuilder>> {
         &self.ui
     }
@@ -31,7 +51,13 @@ impl Window {
 pub struct WindowBuilder {
     borderless: bool,
     height: u32,
+    max_height: u32,
+    max_width: u32,
+    min_height: u32,
+    min_width: u32,
     maximized: bool,
+    max_height_set: bool,
+    max_width_set: bool,
     resizeable: bool,
     title: String,
     transparent: bool,
@@ -47,7 +73,13 @@ impl WindowBuilder {
         WindowBuilder {
             borderless: false,
             height: 100,
+            max_height: 65535,
+            max_width: 65535,
+            min_height: 0,
+            min_width: 0,
             maximized: false,
+            max_height_set: false,
+            max_width_set: false,
             resizeable: true,
             title: String::new(),
             transparent: false,
@@ -96,6 +128,32 @@ impl WindowBuilder {
     /// Starting height of the window in pixels.
     pub fn height(mut self, height: u32) -> Self {
         self.height = height;
+        self
+    }
+
+    /// Sets the amount of maximum height the window should be resized.
+    pub fn max_height(mut self, max_height: u32) -> Self {
+        self.max_height = max_height;
+        self.max_height_set = true;
+        self
+    }
+
+    /// Sets the amount of maximum width the window should be resized.
+    pub fn max_width(mut self, max_width: u32) -> Self {
+        self.max_width = max_width;
+        self.max_width_set = true;
+        self
+    }
+
+    /// Sets the least amount of minimum height the window should be resized.
+    pub fn min_height(mut self, min_height: u32) -> Self {
+        self.min_height = min_height;
+        self
+    }
+
+    /// Sets the least amount of minimum width the window should be resized.
+    pub fn min_width(mut self, min_width: u32) -> Self {
+        self.min_width = min_width;
         self
     }
 
@@ -189,6 +247,20 @@ impl WindowBuilder {
             flags.push(WindowFlag::Transparent);
         }
 
+        let mut max_width = 65535;
+        let mut max_height = 65535;
+
+        if !self.max_height_set || !self.max_width_set {
+            if let Ok(max_size) = orbclient::get_display_size() {
+                if self.max_height_set {
+                    max_height = max_size.1;
+                }
+                if self.max_width_set {
+                    max_width = max_size.0;
+                }
+            }
+        }
+
         Window {
             inner: orbclient::Window::new_flags(
                 self.x,
@@ -199,6 +271,10 @@ impl WindowBuilder {
                 &flags,
             )
             .expect("Error creating window"),
+            max_height: max_height,
+            max_width: max_width,
+            min_height: self.min_height,
+            min_width: self.min_width,
             ui: self.ui,
         }
     }
