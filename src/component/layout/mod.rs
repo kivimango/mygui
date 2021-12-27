@@ -1,3 +1,7 @@
+mod text;
+
+pub use self::text::*;
+
 use specs::{Component, Entity, VecStorage, World};
 use crate::{Constraints};
 
