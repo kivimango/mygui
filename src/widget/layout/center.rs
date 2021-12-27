@@ -1,6 +1,7 @@
 use specs::{Builder, Entity, World, WorldExt};
-use crate::{EntityTree, Constraints, DesiredSize, Layout, LayoutComponent, PositionComponent};
+use crate::{Constraints, DesiredSize, EntityTree, Layout, LayoutComponent, PositionComponent, SizeComponent};
 
+/// A layout widget that centers its child wihtin itself.
 pub struct Center {}
 
 pub struct CenterBuilder {
@@ -21,13 +22,11 @@ impl CenterBuilder {
     }
 
     pub fn child(mut self, child: Entity) -> Self {
-        println!("setting child in Center");
         self.child = Some(child);
         self
     }
 
     pub fn build(self, world: &mut World) -> Entity {
-        println!("bulding Center");
         world.register::<LayoutComponent>();
         
         let layout = LayoutComponent {
@@ -42,13 +41,16 @@ impl CenterBuilder {
 
         let widget = world.create_entity()
         .with(layout)
+        .with(PositionComponent {
+            x:0, y:0
+        })
         .build();
 
         if let Some(child) = self.child {
             let mut tree = world.write_resource::<EntityTree>();
-            let child_id = tree.add_node(child);
-            let parent_id = tree.add_node(widget);
-            tree.append_child(parent_id, child_id);
+            tree.add_node(child);
+            tree.add_node(widget);
+            tree.append_child(widget, child);
         }
 
         widget
@@ -59,20 +61,27 @@ pub struct CenterLayout {}
 
 impl Layout for CenterLayout {
     fn arrange(&self, widget: Entity, desired_size: &DesiredSize, world: &World) {
-        let mut position = world.write_component::<PositionComponent>();
-        if let Some(mut pos) = position.get_mut(widget) {
-            let center_x = pos.x + ( desired_size.width / 2 );
-            let center_y = pos.y + ( desired_size.height / 2 );
-            pos.x = center_x;
-            pos.y = center_y;
+        let tree = world.read_resource::<EntityTree>();
+        let sizes = world.read_storage::<SizeComponent>();
+
+        if let Some(child) = tree.child_of(widget) {
+            let mut position = world.write_component::<PositionComponent>();
+            if let Some(mut pos) = position.get_mut(child) {
+                if let Some(child_size) = sizes.get(child) {
+                    pos.x = (desired_size.width - child_size.width as u32) / 2;
+                    pos.y = (desired_size.height - child_size.height as u32) / 2;
+                }
+                println!("desired size: {:?}", desired_size);
+                println!("new coords: {}-{}", pos.x, pos.y);
+            }
         }
     }
 
     fn measure(&self, _entity: Entity, constraints: &Constraints, _world: &World) -> DesiredSize {
         DesiredSize {
             dirty: false,
-            height: constraints.max_height,
-            width: constraints.max_width
+            width: constraints.max_width,
+            height: constraints.max_height
         }
     }
 }
